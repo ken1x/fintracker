@@ -378,8 +378,9 @@
                         <div class="mb-3">
                             <label class="form-label text-info small text-uppercase fw-bold">Актив</label>
                             <select class="form-select bg-dark text-light border-secondary" id="txAsset" required>
-                                {% for asset in all_assets %} <option value="{{ asset.id }}">{{ asset.name }} ({{
-                                    asset.ticker }})</option> {% endfor %}
+                                {% for asset in all_assets %}
+                                    <option value="{{ asset.id }}">{{ asset.name }} ({{ asset.ticker }})</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="mb-4">

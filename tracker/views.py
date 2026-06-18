@@ -67,16 +67,21 @@ class CorrelationMatrixView(APIView):
                 response = requests.get(url, params=params, timeout=5)
                 response.raise_for_status()
                 candles = response.json()
+
+                # ОНОВЛЕННЯ: Беремо не тільки ціни, а й дати, щоб Pandas міг їх правильно зіставити
+                dates = [datetime.fromtimestamp(candle[0] / 1000.0).date() for candle in candles]
                 close_prices = [float(candle[4]) for candle in candles]
 
                 if len(close_prices) >= 5:
-                    price_series[ticker] = close_prices
+                    # Створюємо pandas Series із прив'язкою до дат
+                    price_series[ticker] = pd.Series(data=close_prices, index=dates)
             except Exception as e:
                 return Response({
                     "error": f"Не вдалося отримати ринкові дані з Binance для тикера {ticker}. Перевірте правильність написання активу."
                 }, status=400)
 
         try:
+            # Тепер DataFrame автоматично вирівняє всі масиви по датах (навіть якщо у NVDAB менше історії)
             df = pd.DataFrame(price_series)
             corr_matrix = df.corr()
             matrix_dict = corr_matrix.fillna(0).to_dict()
