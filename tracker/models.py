@@ -3,9 +3,6 @@ from django.contrib.auth.models import User
 
 
 class Asset(models.Model):
-    """
-    Глобальний довідник інвестиційних активів (крипта, фіат тощо).
-    """
     ASSET_TYPES = (
         ('CRYPTO', 'Криптовалюта'),
         ('FIAT', 'Фіатна валюта'),
@@ -24,10 +21,6 @@ class Asset(models.Model):
 
 
 class AssetPriceHistory(models.Model):
-    """
-    Історичні денні котирування активів.
-    Використовуються як база даних для економетричного аналізу (Pandas/NumPy).
-    """
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="price_history", verbose_name="Актив")
     date = models.DateField(verbose_name="Дата котирування")
     close_price = models.DecimalField(max_digits=18, decimal_places=8, verbose_name="Ціна закриття")
@@ -35,9 +28,7 @@ class AssetPriceHistory(models.Model):
     class Meta:
         verbose_name = "Історія ціни"
         verbose_name_plural = "Історії цін"
-        # Захист від дублікатів: одна монета не може мати дві різні ціни закриття за один і той самий день
         unique_together = ('asset', 'date')
-        # Індекс по даті критично важливий для швидкої вибірки часових рядів (Time-Series)
         indexes = [
             models.Index(fields=['date']),
         ]
@@ -47,9 +38,6 @@ class AssetPriceHistory(models.Model):
 
 
 class Transaction(models.Model):
-    """
-    Лог усіх угод користувача (BUY/SELL). Дані незмінні заднім числом.
-    """
     TRANSACTION_TYPES = (
         ('BUY', 'Купівля'),
         ('SELL', 'Продаж'),
@@ -71,10 +59,6 @@ class Transaction(models.Model):
 
 
 class PortfolioPosition(models.Model):
-    """
-    Кеш поточного стану портфеля користувача.
-    Дозволяє миттєво віддавати баланси на фронтенд без важких SQL-запитів агрегації.
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="positions", verbose_name="Користувач")
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="positions", verbose_name="Актив")
     total_quantity = models.DecimalField(max_digits=18, decimal_places=8, default=0.0,

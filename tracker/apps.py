@@ -5,5 +5,4 @@ class TrackerConfig(AppConfig):
     name = 'tracker'
 
     def ready(self):
-        # Этот импорт внутри метода ready подключает наши сигналы при старте сервера
         import tracker.signals

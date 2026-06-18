@@ -1,11 +1,9 @@
 version: '3.8'
 
 services:
-  # 1. База данных
   db:
     image: postgres:15
     restart: unless-stopped
-    # Используем значения напрямую из файла .env для безопасности
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -15,14 +13,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # 2. Брокер сообщений для Celery
   redis:
     image: redis:alpine
     ports:
       - "6380:6379"
     restart: unless-stopped
 
-  # 3. Наш Django-сервер
   web:
     build: .
     command: >
@@ -35,11 +31,9 @@ services:
     depends_on:
       - db
       - redis
-    # Подключаем наш сейф с секретами
     env_file:
       - .env
 
-  # 4. Воркер Celery (выполняет задачи)
   celery_worker:
     build: .
     command: celery -A config worker -l info
@@ -49,11 +43,9 @@ services:
       - db
       - redis
       - web
-    # === ИСПРАВЛЕНИЕ: Даем воркеру доступ к ключам ===
     env_file:
       - .env
 
-  # 5. Планировщик Celery (запускает задачи по расписанию)
   celery_beat:
     build: .
     command: celery -A config beat -l info

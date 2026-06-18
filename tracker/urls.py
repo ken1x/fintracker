@@ -6,7 +6,9 @@ from .views import (
     PortfolioPerformanceView,
     DashboardView,
     PriceForecastView,
-    AIAssistantView  # <-- Добавили импорт ИИ-контроллера
+    AIAssistantView,
+    ExportReportView,
+    ReportStatusView
 )
 
 router = DefaultRouter()
@@ -16,11 +18,12 @@ urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),
     path('api/', include(router.urls)),
 
-    # Аналитика
     path('api/analytics/correlation/', CorrelationMatrixView.as_view(), name='correlation-matrix'),
     path('api/analytics/performance/', PortfolioPerformanceView.as_view(), name='portfolio-performance'),
     path('api/analytics/forecast/<str:ticker>/', PriceForecastView.as_view(), name='price-forecast'),
 
-    # <-- Добавили новый роут для ИИ-ассистента
     path('api/ai/', AIAssistantView.as_view(), name='ai-assistant'),
+
+    path('api/export/', ExportReportView.as_view(), name='export-report'),
+    path('api/export/status/<str:task_id>/', ReportStatusView.as_view(), name='export-status'),
 ]
