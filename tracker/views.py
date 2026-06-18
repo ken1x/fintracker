@@ -21,9 +21,8 @@ import google.generativeai as genai
 from .models import PortfolioPosition, AssetPriceHistory, Transaction, Asset
 from .serializers import TransactionSerializer
 
-# Імпорти для роботи експорту (Celery)
 from celery.result import AsyncResult
-from .task import generate_csv_report
+from .task import generate_excel_report
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if GEMINI_API_KEY:
@@ -341,8 +340,8 @@ class ExportReportView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        task = generate_csv_report.delay(request.user.id)
-        return Response({"task_id": task.id, "message": "Генерація звіту розпочата"})
+        task = generate_excel_report.delay(request.user.id)
+        return Response({"task_id": task.id, "message": "Генерація Excel-звіту розпочата"})
 
 
 class ReportStatusView(APIView):

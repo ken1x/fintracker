@@ -43,7 +43,11 @@ def fetch_daily_crypto_prices():
 
 
 @shared_task
-def generate_csv_report(user_id):
+def generate_excel_report(user_id):
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils.dataframe import dataframe_to_rows
+
     transactions = Transaction.objects.filter(user_id=user_id).values(
         'timestamp', 'asset__ticker', 'transaction_type', 'quantity', 'execution_price'
     ).order_by('-timestamp')
@@ -67,12 +71,55 @@ def generate_csv_report(user_id):
 
     df['Дата та час'] = df['Дата та час'].dt.tz_localize(None)
 
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Транзакції"
+
+    ws["A1"] = "Фінансовий звіт FinTracker"
+    ws["A1"].font = Font(name="Segoe UI", size=16, bold=True, color="1B365D")
+    ws.row_dimensions[1].height = 25
+
+    for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 3):
+        for c_idx, value in enumerate(row, 1):
+            cell = ws.cell(row=r_idx, column=c_idx, value=value)
+
+            if r_idx == 3:
+                cell.font = Font(name="Segoe UI", bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="1B365D", end_color="1B365D", fill_type="solid")
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            else:
+                if r_idx % 2 == 0:
+                    cell.fill = PatternFill(start_color="F2F5F9", end_color="F2F5F9", fill_type="solid")
+
+                if c_idx == 1:
+                    cell.number_format = "yyyy-mm-dd hh:mm:ss"
+                elif c_idx == 2:
+                    cell.font = Font(bold=True)
+                elif c_idx == 3:
+                    if value == "BUY":
+                        cell.font = Font(bold=True, color="008000")
+                    else:
+                        cell.font = Font(bold=True, color="FF0000")
+                elif c_idx == 4:
+                    cell.number_format = "#,##0.0000"
+                elif c_idx in [5, 6]:
+                    cell.number_format = "$#,##0.00"
+
+            thin = Side(border_style="thin", color="D9D9D9")
+            cell.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    ws.column_dimensions["A"].width = 22
+    ws.column_dimensions["B"].width = 12
+    ws.column_dimensions["C"].width = 15
+    ws.column_dimensions["D"].width = 15
+    ws.column_dimensions["E"].width = 20
+    ws.column_dimensions["F"].width = 20
+
     reports_dir = os.path.join(settings.MEDIA_ROOT, 'reports')
     os.makedirs(reports_dir, exist_ok=True)
 
-    filename = f"finance_report_user_{user_id}.csv"
+    filename = f"finance_report_user_{user_id}.xlsx"
     filepath = os.path.join(reports_dir, filename)
-
-    df.to_csv(filepath, index=False, encoding='utf-8-sig')
+    wb.save(filepath)
 
     return f"/media/reports/{filename}"
